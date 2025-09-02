@@ -1,55 +1,135 @@
 <!DOCTYPE html>
-<html>
+<html lang="ru">
 <head>
-  <meta charset="utf-8">
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>Открываем заявку</title>
   <style>
-    body { 
-      font-family: Arial, sans-serif; 
-      text-align: center; 
-      margin: 50px; 
-      background: #f0f2f5; 
+    body {
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      text-align: center;
+      margin: 40px;
+      background: #f8f9fa;
       color: #333;
     }
+    h1 {
+      color: #007acc;
+    }
+    .container {
+      max-width: 600px;
+      margin: 0 auto;
+      padding: 20px;
+      background: white;
+      border-radius: 10px;
+      box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+    }
     button {
-      padding: 12px 24px;
+      padding: 14px 28px;
       font-size: 18px;
       background: #007acc;
       color: white;
       border: none;
       border-radius: 6px;
       cursor: pointer;
-      margin: 20px;
+      margin: 20px 0;
+      transition: background 0.3s;
     }
     button:hover {
       background: #005a99;
     }
-    .info { margin: 20px; font-size: 16px; }
-    .spinner { 
-      border: 5px solid #f3f3f3; 
-      border-top: 5px solid #007acc; 
-      border-radius: 50%; 
-      width: 40px; 
-      height: 40px; 
-      animation: spin 1s linear infinite; 
-      margin: 20px auto; 
+    .info {
+      margin: 15px 0;
+      font-size: 16px;
+      color: #555;
+    }
+    .spinner {
+      border: 5px solid #f3f3f3;
+      border-top: 5px solid #007acc;
+      border-radius: 50%;
+      width: 40px;
+      height: 40px;
+      animation: spin 1s linear infinite;
+      margin: 20px auto;
       display: none;
     }
     @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
   </style>
 </head>
 <body>
-  <h2>Открываем заявку №<span id="id">...</span></h2>
+  <div class="container">
+    <h1>Открываем заявку</h1>
+    <p><strong>Номер:</strong> <span id="requestId">...</span></p>
 
-  <button id="openBtn">1. Открыть админку</button>
+    <button id="openBtn">▶️ Открыть в TechDo</button>
 
-  <div class="spinner" id="spinner"></div>
-  <p class="info" id="status">Нажмите кнопку выше</p>
+    <div class="spinner" id="spinner"></div>
+    <p class="info" id="status">Нажмите кнопку, чтобы начать</p>
+  </div>
 
   <script>
+    // Получаем ID из URL
     const urlParams = new URLSearchParams(window.location.search);
     const requestId = urlParams.get('id');
 
     if (!requestId) {
-      document.body.innerHTML = '<h2>❌ Ошибка: не указан номер заявки</h2>';
-      setTimeout(() => window.close(), 3
+      document.getElementById('requestId').textContent = 'не указан';
+      document.getElementById('status').textContent = 'Ошибка: не указан номер заявки';
+      document.getElementById('openBtn').disabled = true;
+      document.getElementById('openBtn').style.background = '#ccc';
+      throw new Error('No request ID');
+    }
+
+    // Показываем ID
+    document.getElementById('requestId').textContent = requestId;
+
+    const baseUrl = 'https://techdo.sirius-ft.ru/admin/';
+    const hash = `#requests/edit/${requestId}`;
+    const tabName = 'techdo_admin'; // Имя вкладки
+
+    const openBtn = document.getElementById('openBtn');
+    const spinner = document.getElementById('spinner');
+    const status = document.getElementById('status');
+
+    openBtn.addEventListener('click', () => {
+      // Показываем процесс
+      openBtn.style.display = 'none';
+      spinner.style.display = 'block';
+      status.textContent = 'Открываем админку...';
+
+      // Открываем вкладку (без параметров — будет вкладка!)
+      const adminTab = window.open(baseUrl, tabName);
+
+      if (!adminTab) {
+        status.textContent = '❌ Браузер заблокировал всплывающее окно!';
+        alert('Разрешите всплывающие окна для этого сайта.');
+        return;
+      }
+
+      // Даём 5 секунд на загрузку SPA
+      setTimeout(() => {
+        try {
+          if (adminTab.closed) {
+            status.textContent = 'Вкладка была закрыта';
+            return;
+          }
+
+          // Меняем ТОЛЬКО хэш — важно для SPA
+          adminTab.location.hash = hash;
+          status.textContent = '✅ Заявка открыта!';
+          adminTab.focus();
+
+          // Через 2 секунды закрываем эту страницу
+          setTimeout(() => {
+            window.close(); // Работает, если вкладка открыта через JS
+          }, 2000);
+
+        } catch (e) {
+          console.error('Ошибка при изменении хэша:', e);
+          status.textContent = '⚠️ Не удалось открыть заявку';
+          alert('Ошибка. Попробуйте открыть вручную.');
+        }
+      }, 5000);
+    });
+  </script>
+</body>
+</html>
