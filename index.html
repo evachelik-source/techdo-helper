@@ -66,10 +66,7 @@
           tab.location.hash = hash;
           tab.focus();
 
-          // Закрываем промежуточное окно
-          setTimeout(() => {
-            window.close();
-          }, 1000);
+        
 
         } catch (e) {
           status.textContent = '❌ Ошибка: ' + e.message;
