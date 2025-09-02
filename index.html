@@ -4,93 +4,78 @@
   <meta charset="UTF-8" />
   <title>Открываем заявку</title>
   <style>
-  body {
-    font-family: Arial, sans-serif;
-    text-align: center;
-    margin: 50px;
-    background: #f0f2f5;
-  }
-  button {
-    padding: 14px 28px;
-    font-size: 18px;
-    background: #007acc;
-    color: white;
-    border: none;
-    border-radius: 6px;
-    cursor: pointer;
-  }
-  button:hover { background: #005a99; }
-  .log { text-align: left; margin: 20px auto; max-width: 600px; font-family: monospace; background: #fff; padding: 10px; border-radius: 5px; }
-</style>
+    body {
+      font-family: Arial, sans-serif;
+      text-align: center;
+      margin: 50px;
+      background: #f0f2f5;
+    }
+    button {
+      padding: 14px 28px;
+      font-size: 18px;
+      background: #007acc;
+      color: white;
+      border: none;
+      border-radius: 6px;
+      cursor: pointer;
+    }
+    button:hover { background: #005a99; }
+    .info { margin: 20px; font-size: 18px; }
+  </style>
 </head>
 <body>
   <h1>Открываем заявку №<span id="id">...</span></h1>
   <button id="openBtn">▶️ Открыть в TechDo</button>
-  <div class="log" id="log">Лог: готов</div>
+  <p class="info" id="status">Готов</p>
 
   <script>
     const urlParams = new URLSearchParams(window.location.search);
     const requestId = urlParams.get('id');
-    const log = document.getElementById('log');
-
-    function logMsg(msg) {
-      console.log('[Redirector] ' + msg);
-      log.textContent += '\n→ ' + msg;
-    }
+    const status = document.getElementById('status');
 
     if (!requestId) {
       document.getElementById('id').textContent = 'ошибка';
-      logMsg('❌ Не указан ID');
+      status.textContent = '❌ Не указан ID';
       throw new Error('No ID');
     }
 
     document.getElementById('id').textContent = requestId;
 
     const baseUrl = 'https://techdo.sirius-ft.ru/admin/';
-    const fullUrl = baseUrl + `#requests/edit/${requestId}`;
+    const hash = `#requests/edit/${requestId}`;
     const tabName = 'techdo_admin';
 
-    const openBtn = document.getElementById('openBtn');
+    document.getElementById('openBtn').addEventListener('click', () => {
+      document.getElementById('openBtn').disabled = true;
+      status.textContent = 'Открываем админку...';
 
-    openBtn.addEventListener('click', () => {
-      logMsg('Кнопка нажата');
-      openBtn.disabled = true;
-
-      logMsg('Открываем: ' + baseUrl);
+      // Открываем чистую админку
       const tab = window.open(baseUrl, tabName);
 
       if (!tab) {
-        logMsg('❌ window.open() вернул null — всплывающее окно заблокировано');
         alert('Разрешите всплывающие окна!');
         return;
       }
 
-      logMsg('✅ Вкладка открыта. Ждём 5 секунд...');
+      // Увеличиваем задержку до 8 секунд — даём SPA время
       setTimeout(() => {
+        status.textContent = 'Подставляем хэш...';
+
         try {
-          logMsg('Попытка перейти: ' + fullUrl);
-
-          // Проверим, не закрыта ли вкладка
-          if (tab.closed) {
-            logMsg('❌ Вкладка была закрыта');
-            return;
-          }
-
-          // Меняем URL
-          tab.location.href = fullUrl;
-          logMsg('✅ Успешно отправлен переход');
+          // ВАЖНО: меняем ТОЛЬКО хэш, а не href
+          tab.location.hash = hash;
           tab.focus();
 
           // Закрываем промежуточное окно
           setTimeout(() => {
             window.close();
-          }, 1500);
+          }, 1000);
 
         } catch (e) {
-          logMsg('❌ Ошибка: ' + e.message);
-          alert('Ошибка: ' + e.message);
+          status.textContent = '❌ Ошибка: ' + e.message;
+          console.error(e);
         }
-      }, 5000);
+      }, 8000); // ⏱️ 8 секунд вместо 5
     });
   </script>
 </body>
