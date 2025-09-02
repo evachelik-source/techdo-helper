@@ -11,25 +11,40 @@
       background: #f0f2f5; 
       color: #333;
     }
+    button {
+      padding: 12px 24px;
+      font-size: 18px;
+      background: #007acc;
+      color: white;
+      border: none;
+      border-radius: 6px;
+      cursor: pointer;
+      margin: 20px;
+    }
+    button:hover {
+      background: #005a99;
+    }
+    .info { margin: 20px; font-size: 16px; }
     .spinner { 
-      border: 6px solid #f3f3f3; 
-      border-top: 6px solid #007acc; 
+      border: 5px solid #f3f3f3; 
+      border-top: 5px solid #007acc; 
       border-radius: 50%; 
-      width: 70px; 
-      height: 70px; 
-      animation: spin 1.2s linear infinite; 
-      margin: 30px auto; 
+      width: 40px; 
+      height: 40px; 
+      animation: spin 1s linear infinite; 
+      margin: 20px auto; 
+      display: none;
     }
     @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
-    .step { margin: 15px 0; font-size: 18px; }
   </style>
 </head>
 <body>
-  <h2>Открываем заявку...</h2>
-  <div class="spinner"></div>
-  <p class="step">1. Открываем админку</p>
-  <p class="step">2. Ждём загрузки системы</p>
-  <p class="step">3. Открываем заявку</p>
+  <h2>Открываем заявку №<span id="id">...</span></h2>
+
+  <button id="openBtn">1. Открыть админку</button>
+
+  <div class="spinner" id="spinner"></div>
+  <p class="info" id="status">Нажмите кнопку выше</p>
 
   <script>
     const urlParams = new URLSearchParams(window.location.search);
@@ -37,40 +52,4 @@
 
     if (!requestId) {
       document.body.innerHTML = '<h2>❌ Ошибка: не указан номер заявки</h2>';
-      setTimeout(() => window.close(), 3000);
-      throw new Error('No request ID');
-    }
-
-    const baseUrl = 'https://techdo.sirius-ft.ru/admin/';
-    const hash = `#requests/edit/${requestId}`;
-    const tabName = 'techdo_helper_tab';
-
-    // 🔥 Ключевое изменение: убрали параметры размеров → будет вкладка!
-    const adminTab = window.open(baseUrl, tabName); // ← без 'width=...'!
-
-    if (!adminTab) {
-      alert('Браузер заблокировал всплывающее окно. Разрешите его.');
-      throw new Error('Popup blocked');
-    }
-
-    // Ждём 5 секунд — даём SPA время загрузиться
-    setTimeout(() => {
-      try {
-        if (adminTab.closed) return;
-
-        // Меняем только хэш — важно для SPA
-        adminTab.location.hash = hash;
-        adminTab.focus();
-
-        // Закрываем промежуточное окно
-        setTimeout(() => {
-          window.close();
-        }, 1000);
-      } catch (e) {
-        console.error('Ошибка:', e);
-        alert('Не удалось открыть заявку. Попробуйте вручную.');
-      }
-    }, 5000);
-  </script>
-</body>
-</html>
+      setTimeout(() => window.close(), 3
