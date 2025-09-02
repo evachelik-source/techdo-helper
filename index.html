@@ -79,7 +79,7 @@
       logMsg('1. Открываем чистую админку (прогрев)');
 
       // Шаг 1: Открываем чистую админку — чтобы SPA загрузилось
-      const preloadTab = window.open('https://techdo.sirius-ft.ru/admin/edit/${requestId}', tabName);
+      const preloadTab = window.open('https://techdo.sirius-ft.ru/admin/#requests/edit/${requestId}', tabName);
       
       if (!preloadTab) {
         alert('Разрешите всплывающие окна!');
@@ -93,7 +93,6 @@
         logMsg('2. Открываем с хэшем: ' + url);
         status.textContent = 'Открываем заявку...';
 
-        const requestTab = window.open(url, tabName);
         const requestTab = window.open(url, tabName);
         requestTab.focus();
 
