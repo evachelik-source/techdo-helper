@@ -14,9 +14,30 @@
     h1 {
       color: #007acc;
     }
+    .step {
+      margin: 30px auto;
+      padding: 15px;
+      max-width: 600px;
+      border: 1px solid #ddd;
+      border-radius: 8px;
+      background: white;
+      text-align: left;
+    }
+    .step h3 {
+      margin-top: 0;
+      color: #007acc;
+    }
+    code {
+      display: block;
+      background: #eee;
+      padding: 10px;
+      margin: 10px 0;
+      border-radius: 4px;
+      word-break: break-all;
+    }
     button {
-      padding: 14px 28px;
-      font-size: 18px;
+      padding: 12px 24px;
+      font-size: 16px;
       background: #007acc;
       color: white;
       border: none;
@@ -26,62 +47,65 @@
     button:hover {
       background: #005a99;
     }
-    .info {
-      margin: 20px;
-      font-size: 18px;
-    }
-    .tip {
-      max-width: 600px;
-      margin: 30px auto;
-      font-size: 16px;
-      color: #555;
-      line-height: 1.5;
+    .hidden {
+      display: none;
     }
   </style>
 </head>
 <body>
   <h1>Открываем заявку №<span id="id">...</span></h1>
-  <button id="openBtn">▶️ Подготовить и открыть</button>
-  <p class="info" id="status">Нажмите кнопку</p>
 
-  <div class="tip">
-    <p>💡 После нажатия:</p>
-    <ol style="text-align: left;">
-      <li>Страница подождёт 8 секунд — чтобы SPA успел загрузиться</li>
-      <li>Откроет ссылку с хэшем: <code>#requests/edit/...</code></li>
-      <li>Всплывающая панель должна открыться</li>
-    </ol>
+  <div class="step">
+    <h3>1. Откройте админку</h3>
+    <p>Откройте в новой вкладке:</p>
+    <a href="https://techdo.sirius-ft.ru/admin/" target="_blank">
+      https://techdo.sirius-ft.ru/admin/
+    </a>
+    <p>Дождитесь полной загрузки интерфейса.</p>
+  </div>
+
+  <div class="step">
+    <h3>2. Нажмите кнопку ниже</h3>
+    <button id="readyBtn">Я готов — показать ссылку на заявку</button>
+  </div>
+
+  <div class="step hidden" id="resultStep">
+    <h3>3. Откройте заявку</h3>
+    <p>Нажмите на ссылку ниже — она откроется в той же вкладке:</p>
+    <code id="finalLink">Загрузка...</code>
+    <a id="openLink" href="#" target="techdo_admin">
+      ▶️ Открыть заявку
+    </a>
   </div>
 
   <script>
     const urlParams = new URLSearchParams(window.location.search);
     const requestId = urlParams.get('id');
-    const status = document.getElementById('status');
 
     if (!requestId) {
       document.getElementById('id').textContent = 'ошибка';
-      status.textContent = '❌ Не указан номер заявки';
+      document.querySelector('.step').innerHTML = '<h3>❌ Ошибка</h3><p>Не указан номер заявки.</p>';
       throw new Error('No ID');
     }
 
     document.getElementById('id').textContent = requestId;
 
     const fullUrl = `https://techdo.sirius-ft.ru/admin/#requests/edit/${requestId}`;
-    const tabName = 'techdo_admin';
+    const resultStep = document.getElementById('resultStep');
+    const finalLink = document.getElementById('finalLink');
+    const openLink = document.getElementById('openLink');
 
-    document.getElementById('openBtn').addEventListener('click', () => {
-      const btn = document.getElementById('openBtn');
-      btn.disabled = true;
-      btn.style.background = '#ccc';
-      status.textContent = '⏳ Загружаем систему... Ждём 8 секунд';
+    document.getElementById('readyBtn').addEventListener('click', () => {
+      // Показываем финальный шаг
+      resultStep.classList.remove('hidden');
 
+      // Через 5 секунд (доп. задержка) — активируем ссылку
       setTimeout(() => {
-        status.textContent = '✅ Открываем заявку...';
-        const tab = window.open(fullUrl, tabName);
-        tab.focus();
-
-        // Не закрываем, пусть пользователь сам
-      }, 8000);
+        finalLink.textContent = fullUrl;
+        openLink.href = fullUrl;
+        openLink.style.fontWeight = 'bold';
+        openLink.style.color = '#d9534f';
+      }, 5000);
     });
   </script>
 </body>
