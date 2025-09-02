@@ -5,10 +5,14 @@
   <title>Открываем заявку</title>
   <style>
     body {
-      font-family: Arial, sans-serif;
+      font-family: 'Segoe UI', Arial, sans-serif;
       text-align: center;
       margin: 50px;
-      background: #f0f2f5;
+      background: #f8f9fa;
+      color: #333;
+    }
+    h1 {
+      color: #007acc;
     }
     button {
       padding: 14px 28px;
@@ -19,14 +23,41 @@
       border-radius: 6px;
       cursor: pointer;
     }
-    button:hover { background: #005a99; }
-    .info { margin: 20px; font-size: 18px; }
+    button:hover {
+      background: #005a99;
+    }
+    .info {
+      margin: 20px;
+      font-size: 18px;
+      font-weight: 500;
+    }
+    .success {
+      color: #28a745;
+      font-weight: bold;
+    }
+    .tip {
+      margin: 30px;
+      font-size: 16px;
+      color: #666;
+      max-width: 600px;
+      margin: 30px auto;
+    }
   </style>
 </head>
 <body>
   <h1>Открываем заявку №<span id="id">...</span></h1>
   <button id="openBtn">▶️ Открыть в TechDo</button>
-  <p class="info" id="status">Готов</p>
+  <p class="info" id="status">Нажмите кнопку, чтобы начать</p>
+
+  <div class="tip">
+    <p>💡 После нажатия:</p>
+    <ol style="text-align: left;">
+      <li>Откроется вкладка с админкой</li>
+      <li>Через 8 секунд — подставится хэш</li>
+      <li>Заявка откроется во всплывающей панели</li>
+      <li>Эта страница останется открытой — можете закрыть её вручную</li>
+    </ol>
+  </div>
 
   <script>
     const urlParams = new URLSearchParams(window.location.search);
@@ -35,8 +66,9 @@
 
     if (!requestId) {
       document.getElementById('id').textContent = 'ошибка';
-      status.textContent = '❌ Не указан ID';
-      throw new Error('No ID');
+      status.textContent = '❌ Не указан номер заявки';
+      document.getElementById('openBtn').disabled = true;
+      throw new Error('No request ID');
     }
 
     document.getElementById('id').textContent = requestId;
@@ -46,33 +78,39 @@
     const tabName = 'techdo_admin';
 
     document.getElementById('openBtn').addEventListener('click', () => {
-      document.getElementById('openBtn').disabled = true;
+      const btn = document.getElementById('openBtn');
+      btn.disabled = true;
+      btn.style.background = '#ccc';
       status.textContent = 'Открываем админку...';
 
-      // Открываем чистую админку
       const tab = window.open(baseUrl, tabName);
 
       if (!tab) {
-        alert('Разрешите всплывающие окна!');
+        status.textContent = '❌ Всплывающее окно заблокировано';
+        alert('Разрешите всплывающие окна для этого сайта');
+        btn.disabled = false;
+        btn.style.background = '#007acc';
         return;
       }
 
-      // Увеличиваем задержку до 8 секунд — даём SPA время
-      setTimeout(() => {
-        status.textContent = 'Подставляем хэш...';
+      status.textContent = '⏳ Ждём 8 секунд...';
 
+      setTimeout(() => {
         try {
-          // ВАЖНО: меняем ТОЛЬКО хэш, а не href
+          if (tab.closed) {
+            status.textContent = '❌ Вкладка была закрыта';
+            return;
+          }
+
+          // Меняем ТОЛЬКО хэш — важно для SPA
           tab.location.hash = hash;
           tab.focus();
-
-        
-
+          status.innerHTML = '✅ <span class="success">Заявка открыта!</span><br>Теперь можно закрыть эту вкладку';
         } catch (e) {
           status.textContent = '❌ Ошибка: ' + e.message;
           console.error(e);
         }
-      }, 8000); // ⏱️ 8 секунд вместо 5
+      }, 8000);
     });
   </script>
 </body>
