@@ -2,107 +2,66 @@
 <html lang="ru">
 <head>
   <meta charset="UTF-8" />
-  <title>Открываем заявку</title>
+  <title>Открываем заявку...</title>
   <style>
-  body {
-    font-family: 'Segoe UI', Arial, sans-serif;
-    text-align: center;
-    margin: 50px;
-    background: #f8f9fa;
-    color: #333;
-  }
-  h1 {
-    color: #007acc;
-  }
-  .info {
-    margin: 20px;
-    font-size: 18px;
-  }
-  .btn {
-    padding: 14px 28px;
-    font-size: 18px;
-    background: #007acc;
-    color: white;
-    border: none;
-    border-radius: 6px;
-    cursor: pointer;
-  }
-  .btn:hover {
-    background: #005a99;
-  }
-  .log {
-    margin: 30px auto;
-    max-width: 600px;
-    text-align: left;
-    font-family: monospace;
-    background: #fff;
-    padding: 15px;
-    border: 1px solid #ddd;
-    border-radius: 6px;
-  }
-</style>
+    body {
+      font-family: 'Segoe UI', Arial, sans-serif;
+      text-align: center;
+      margin: 50px;
+      background: #f8f9fa;
+      color: #333;
+    }
+    .spinner {
+      border: 6px solid #f3f3f3;
+      border-top: 6px solid #007acc;
+      border-radius: 50%;
+      width: 50px;
+      height: 50px;
+      animation: spin 1s linear infinite;
+      margin: 30px auto;
+    }
+    @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+    p { font-size: 18px; }
+  </style>
 </head>
 <body>
-  <h1>Открываем заявку №<span id="id">...</span></h1>
-  <button id="startBtn" class="btn">▶️ Запустить открытие</button>
-  <p class="info" id="status">Готов к запуску</p>
-
-  <div class="log" id="log">Лог: ожидание запуска...</div>
+  <div class="spinner"></div>
+  <p>Открываем заявку...</p>
+  <p><small>Можно закрыть эту вкладку</small></p>
 
   <script>
+    // Получаем ID из URL
     const urlParams = new URLSearchParams(window.location.search);
     const requestId = urlParams.get('id');
-    const status = document.getElementById('status');
-    const log = document.getElementById('log');
-    const tabName = 'techdo_admin';
-
-    function logMsg(msg) {
-      console.log('[TechDo] ' + msg);
-      log.textContent += '\n→ ' + msg;
-    }
 
     if (!requestId) {
-      document.getElementById('id').textContent = 'ошибка';
-      status.textContent = '❌ Не указан ID';
-      logMsg('Ошибка: нет ID');
+      alert('Не указан номер заявки');
       throw new Error('No request ID');
     }
 
-    document.getElementById('id').textContent = requestId;
+    const baseUrl = 'https://techdo.sirius-ft.ru/admin/';
+    const hash = `#requests/edit/${requestId}`;
+    const fullUrl = baseUrl + hash;
+    const tabName = 'techdo_admin';
 
-    const url = `https://techdo.sirius-ft.ru/admin/#requests/edit/${requestId}`;
+    // Открываем вкладку с хэшем (1-й раз — "прогрев")
+    const firstTab = window.open(fullUrl, tabName);
 
-    document.getElementById('startBtn').addEventListener('click', () => {
-      document.getElementById('startBtn').disabled = true;
-      status.textContent = 'Запущено...';
+    if (!firstTab) {
+      alert('Разрешите всплывающие окна!');
+      throw new Error('Popup blocked');
+    }
 
-      logMsg('1. Открываем чистую админку (прогрев)');
+    // Через 100 мс — открываем снова (2-й раз — открытие)
+    setTimeout(() => {
+      const secondTab = window.open(fullUrl, tabName);
+      secondTab.focus();
 
-      // Шаг 1: Открываем чистую админку — чтобы SPA загрузилось
-      const preloadTab = window.open(`https://techdo.sirius-ft.ru/admin/#requests/edit/${requestId}`, tabName);
-      
-      if (!preloadTab) {
-        alert('Разрешите всплывающие окна!');
-        return;
-      }
-
-      preloadTab.focus();
-
-      // Шаг 2: Через 6 секунд — открываем с хэшем
+      // Закрываем промежуточную страницу
       setTimeout(() => {
-        logMsg('2. Открываем с хэшем: ' + url);
-        status.textContent = 'Открываем заявку...';
-
-        const requestTab = window.open(url, tabName);
-        requestTab.focus();
-
-        // Через 1 секунду — можно закрыть промежуточную страницу
-        //setTimeout(() => {
-        window.close(); // Можно включить, если разрешено
-        //}, 1000);
-
-      }, 100);
-    });
+        window.close(); // Работает, если вкладка открыта через JS
+      }, 500);
+    }, 100);
   </script>
 </body>
 </html>
