@@ -4,68 +4,81 @@
   <meta charset="utf-8">
   <title>Открываем заявку</title>
   <style>
-    body { font-family: Arial, sans-serif; text-align: center; margin: 50px; background: #f0f2f5; }
+    body { 
+      font-family: Arial, sans-serif; 
+      text-align: center; 
+      margin: 50px; 
+      background: #f0f2f5; 
+      color: #333;
+    }
     .spinner { 
       border: 6px solid #f3f3f3; 
       border-top: 6px solid #007acc; 
       border-radius: 50%; 
-      width: 60px; 
-      height: 60px; 
-      animation: spin 1s linear infinite; 
+      width: 70px; 
+      height: 70px; 
+      animation: spin 1.2s linear infinite; 
       margin: 30px auto; 
     }
     @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
-    a { color: #007acc; }
+    .step { margin: 15px 0; font-size: 18px; }
   </style>
 </head>
 <body>
   <h2>Открываем заявку...</h2>
   <div class="spinner"></div>
-  <p>Поиск открытой вкладки...</p>
+  <p class="step">1. Открываем админку</p>
+  <p class="step">2. Ждём загрузки системы</p>
+  <p class="step">3. Открываем заявку</p>
 
   <script>
-    // Получаем ID заявки
+    // Получаем ID из URL
     const urlParams = new URLSearchParams(window.location.search);
     const requestId = urlParams.get('id');
-    
+
     if (!requestId) {
-      document.body.innerHTML = '<h2>❌ Ошибка: не указан ID заявки</h2>';
+      document.body.innerHTML = '<h2>❌ Ошибка: не указан номер заявки</h2>';
       setTimeout(() => window.close(), 3000);
-      throw new Error('No ID');
+      throw new Error('No request ID');
     }
 
-    const targetUrl = 'https://techdo.sirius-ft.ru/admin/';
+    const baseUrl = 'https://techdo.sirius-ft.ru/admin/';
     const hash = `#requests/edit/${requestId}`;
-    const fullUrl = targetUrl + hash;
+    const tabName = 'techdo_helper_tab'; // Имя вкладки
 
-    // Пытаемся найти уже открытую вкладку
-    const existingWindow = window.open('', 'admin_window');
+    // Шаг 1: Открываем новую вкладку
+    const adminTab = window.open(baseUrl, tabName, 'width=1200,height=800,left=100,top=100');
 
-    // Вариант 1: если вкладка уже открыта и называется "admin_window"
-    if (existingWindow && !existingWindow.closed && existingWindow.location.href.includes('techdo.sirius-ft.ru')) {
+    // Если всплывающие окна заблокированы
+    if (!adminTab) {
+      alert('Браузер заблокировал всплывающее окно. Разрешите всплывающие окна для этого сайта.');
+      throw new Error('Popup blocked');
+    }
+
+    // Шаг 2: Ждём 5 секунд — даём SPA время загрузиться
+    setTimeout(() => {
       try {
-        existingWindow.location.hash = hash;
-        existingWindow.focus();
-        window.close();
-      } catch (e) {
-        // Если CORS — просто откроем новую
-        openInNewTab();
-      }
-    } else {
-      // Вариант 2: открыть новую вкладку с задержкой
-      openInNewTab();
-    }
-
-    function openInNewTab() {
-      const newTab = window.open(targetUrl, 'admin_window');
-      setTimeout(() => {
-        if (newTab) {
-          newTab.location.href = fullUrl;
-          newTab.focus();
+        if (adminTab.closed) {
+          console.warn('Вкладка была закрыта пользователем');
+          return;
         }
-        window.close();
-      }, 3000); // 3 секунды — чтобы SPA успел загрузиться
-    }
+
+        // Шаг 3: Меняем ТОЛЬКО хэш (не href!) — это важно для SPA
+        adminTab.location.hash = hash;
+
+        // Фокусируем вкладку
+        adminTab.focus();
+
+        // Через секунду можно закрыть промежуточное окно
+        setTimeout(() => {
+          window.close(); // Работает, только если вкладка открыта JS
+        }, 1000);
+
+      } catch (e) {
+        console.error('Ошибка при изменении хэша:', e);
+        alert('Не удалось открыть заявку. Попробуйте вручную.');
+      }
+    }, 5000); // ⏱️ 5 секунд — безопасный запас для загрузки SPA
   </script>
 </body>
 </html>
