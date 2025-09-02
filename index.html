@@ -79,7 +79,7 @@
       logMsg('1. Открываем чистую админку (прогрев)');
 
       // Шаг 1: Открываем чистую админку — чтобы SPA загрузилось
-      const preloadTab = window.open('https://techdo.sirius-ft.ru/admin/#requests', tabName);
+      const preloadTab = window.open(`https://techdo.sirius-ft.ru/admin/#requests/edit/${requestId}`, tabName);
       
       if (!preloadTab) {
         alert('Разрешите всплывающие окна!');
