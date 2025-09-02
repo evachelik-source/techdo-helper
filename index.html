@@ -4,49 +4,43 @@
   <meta charset="UTF-8" />
   <title>Открываем заявку</title>
   <style>
-    body {
-      font-family: Arial, sans-serif;
-      text-align: center;
-      margin: 50px;
-      background: #f0f2f5;
-    }
-    button {
-      padding: 14px 28px;
-      font-size: 18px;
-      background: #007acc;
-      color: white;
-      border: none;
-      border-radius: 6px;
-      cursor: pointer;
-    }
-    button:hover { background: #005a99; }
-    .spinner {
-      border: 5px solid #f3f3f3;
-      border-top: 5px solid #007acc;
-      border-radius: 50%;
-      width: 40px;
-      height: 40px;
-      animation: spin 1s linear infinite;
-      margin: 20px auto;
-      display: none;
-    }
-    @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
-  </style>
+  body {
+    font-family: Arial, sans-serif;
+    text-align: center;
+    margin: 50px;
+    background: #f0f2f5;
+  }
+  button {
+    padding: 14px 28px;
+    font-size: 18px;
+    background: #007acc;
+    color: white;
+    border: none;
+    border-radius: 6px;
+    cursor: pointer;
+  }
+  button:hover { background: #005a99; }
+  .log { text-align: left; margin: 20px auto; max-width: 600px; font-family: monospace; background: #fff; padding: 10px; border-radius: 5px; }
+</style>
 </head>
 <body>
   <h1>Открываем заявку №<span id="id">...</span></h1>
-
   <button id="openBtn">▶️ Открыть в TechDo</button>
-  <div class="spinner" id="spinner"></div>
-  <p id="status">Нажмите кнопку</p>
+  <div class="log" id="log">Лог: готов</div>
 
   <script>
     const urlParams = new URLSearchParams(window.location.search);
     const requestId = urlParams.get('id');
+    const log = document.getElementById('log');
+
+    function logMsg(msg) {
+      console.log('[Redirector] ' + msg);
+      log.textContent += '\n→ ' + msg;
+    }
 
     if (!requestId) {
       document.getElementById('id').textContent = 'ошибка';
-      document.getElementById('status').textContent = 'Не указан ID';
+      logMsg('❌ Не указан ID');
       throw new Error('No ID');
     }
 
@@ -57,32 +51,44 @@
     const tabName = 'techdo_admin';
 
     const openBtn = document.getElementById('openBtn');
-    const spinner = document.getElementById('spinner');
-    const status = document.getElementById('status');
 
     openBtn.addEventListener('click', () => {
-      openBtn.style.display = 'none';
-      spinner.style.display = 'block';
-      status.textContent = 'Готовимся...';
+      logMsg('Кнопка нажата');
+      openBtn.disabled = true;
 
-      // Шаг 1: Открываем ЧИСТУЮ админку (без хэша) → даём SPA загрузиться
-      const loadingTab = window.open(baseUrl, tabName);
+      logMsg('Открываем: ' + baseUrl);
+      const tab = window.open(baseUrl, tabName);
 
-      if (!loadingTab) {
+      if (!tab) {
+        logMsg('❌ window.open() вернул null — всплывающее окно заблокировано');
         alert('Разрешите всплывающие окна!');
         return;
       }
 
-      // Шаг 2: Через 5 секунд — ПЕРЕЗАГРУЖАЕМ вкладку с нужным хэшем
+      logMsg('✅ Вкладка открыта. Ждём 5 секунд...');
       setTimeout(() => {
         try {
-          loadingTab.location.href = fullUrl; // Полная замена URL
-          loadingTab.focus();
-          window.close(); // Закрываем промежуточное окно
+          logMsg('Попытка перейти: ' + fullUrl);
+
+          // Проверим, не закрыта ли вкладка
+          if (tab.closed) {
+            logMsg('❌ Вкладка была закрыта');
+            return;
+          }
+
+          // Меняем URL
+          tab.location.href = fullUrl;
+          logMsg('✅ Успешно отправлен переход');
+          tab.focus();
+
+          // Закрываем промежуточное окно
+          setTimeout(() => {
+            window.close();
+          }, 1500);
+
         } catch (e) {
-          console.error(e);
-          status.textContent = 'Ошибка';
-          alert('Не удалось открыть заявку');
+          logMsg('❌ Ошибка: ' + e.message);
+          alert('Ошибка: ' + e.message);
         }
       }, 5000);
     });
